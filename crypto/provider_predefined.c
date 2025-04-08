@@ -23,7 +23,7 @@ const OSSL_PROVIDER_INFO ossl_predefined_providers[] = {
 #else
     { "default", NULL, ossl_default_provider_init, NULL, 1 },
 # ifdef STATIC_LEGACY
-    { "legacy", NULL, ossl_legacy_provider_init, NULL, 0 },
+    { "legacy", NULL, ossl_legacy_provider_init, NULL, 1 },
 # endif
     { "base", NULL, ossl_base_provider_init, NULL, 0 },
     { "null", NULL, ossl_null_provider_init, NULL, 0 },

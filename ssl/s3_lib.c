@@ -128,6 +128,22 @@ static SSL_CIPHER tls13_ciphers[] = {
 static SSL_CIPHER ssl3_ciphers[] = {
     {
      1,
+     SSL3_TXT_RSA_DES_64_CBC_SHA,
+     SSL3_RFC_RSA_DES_64_CBC_SHA,
+     SSL3_CK_RSA_DES_64_CBC_SHA,
+     SSL_kRSA,
+     SSL_aRSA,
+     SSL_DES,
+     SSL_SHA1,
+     SSL3_VERSION, TLS1_2_VERSION,
+     DTLS1_BAD_VER, DTLS1_2_VERSION,
+     SSL_LOW,
+     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
+     56,
+     56,
+     },
+    {
+     1,
      SSL3_TXT_RSA_NULL_MD5,
      SSL3_RFC_RSA_NULL_MD5,
      SSL3_CK_RSA_NULL_MD5,

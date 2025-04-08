@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#undef AI_PASSIVE
 #include "e_os.h"
 #include "internal/sockets.h"
 

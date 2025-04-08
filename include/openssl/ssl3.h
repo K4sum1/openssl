@@ -76,6 +76,7 @@ extern "C" {
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
 
 /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
+# define SSL3_RFC_RSA_DES_64_CBC_SHA             "TLS_RSA_WITH_DES_CBC_SHA"
 # define SSL3_RFC_RSA_NULL_MD5                   "TLS_RSA_WITH_NULL_MD5"
 # define SSL3_RFC_RSA_NULL_SHA                   "TLS_RSA_WITH_NULL_SHA"
 # define SSL3_RFC_RSA_DES_192_CBC3_SHA           "TLS_RSA_WITH_3DES_EDE_CBC_SHA"

@@ -231,7 +231,9 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
 
     return 1;
 #else
-    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;
+/*    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;*/
+    *val |= op;
+    *ret = *val;
     return 1;
 #endif
 }
@@ -247,7 +249,8 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 
     return 1;
 #else
-    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
+/*    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);*/
+    *ret = *val;
     return 1;
 #endif
 }

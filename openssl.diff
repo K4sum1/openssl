@@ -1,0 +1,178 @@
+diff --git a/crypto/bio/bio_addr.c b/crypto/bio/bio_addr.c
+index a80774b..b9d0a60 100644
+--- a/crypto/bio/bio_addr.c
++++ b/crypto/bio/bio_addr.c
+@@ -35,6 +35,7 @@
+ CRYPTO_RWLOCK *bio_lookup_lock;
+ static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
+ 
++#undef AI_PASSIVE
+ /*
+  * Throughout this file and bio_local.h, the existence of the macro
+  * AI_PASSIVE is used to detect the availability of struct addrinfo,
+diff --git a/crypto/bio/bio_local.h b/crypto/bio/bio_local.h
+index 749e8f8..9005f29 100644
+--- a/crypto/bio/bio_local.h
++++ b/crypto/bio/bio_local.h
+@@ -7,6 +7,7 @@
+  * https://www.openssl.org/source/license.html
+  */
+ 
++#undef AI_PASSIVE
+ #include "e_os.h"
+ #include "internal/sockets.h"
+ 
+diff --git a/crypto/getenv.c b/crypto/getenv.c
+index e79b6cc..aefabf9 100644
+--- a/crypto/getenv.c
++++ b/crypto/getenv.c
+@@ -15,6 +15,15 @@
+ #include "internal/cryptlib.h"
+ #include "e_os.h"
+ 
++#ifndef _malloca
++#define _malloca(size) malloc(size)
++#endif
++
++#ifndef _freea
++#define _freea(target) free(target)
++#endif
++
++
+ char *ossl_safe_getenv(const char *name)
+ {
+ #if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)
+diff --git a/crypto/init.c b/crypto/init.c
+index c88a237..1d81227 100644
+--- a/crypto/init.c
++++ b/crypto/init.c
+@@ -131,7 +131,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
+ 
+ #if !defined(OPENSSL_USE_NODELETE) \
+     && !defined(OPENSSL_NO_PINSHARED)
+-# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
++# if defined(DSO_WIN32) && !defined(_WIN32_WCE) && 0
+     {
+         HMODULE handle = NULL;
+         BOOL ret;
+@@ -665,7 +665,7 @@ int OPENSSL_atexit(void (*handler)(void))
+         } handlersym;
+ 
+         handlersym.func = handler;
+-# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
++# if defined(DSO_WIN32) && !defined(_WIN32_WCE) && 0
+         {
+             HMODULE handle = NULL;
+             BOOL ret;
+diff --git a/crypto/provider_predefined.c b/crypto/provider_predefined.c
+index 068e0b7..a03f2bb 100644
+--- a/crypto/provider_predefined.c
++++ b/crypto/provider_predefined.c
+@@ -23,7 +23,7 @@ const OSSL_PROVIDER_INFO ossl_predefined_providers[] = {
+ #else
+     { "default", NULL, ossl_default_provider_init, NULL, 1 },
+ # ifdef STATIC_LEGACY
+-    { "legacy", NULL, ossl_legacy_provider_init, NULL, 0 },
++    { "legacy", NULL, ossl_legacy_provider_init, NULL, 1 },
+ # endif
+     { "base", NULL, ossl_base_provider_init, NULL, 0 },
+     { "null", NULL, ossl_null_provider_init, NULL, 0 },
+diff --git a/crypto/threads_win.c b/crypto/threads_win.c
+index d65b382..54a45f7 100644
+--- a/crypto/threads_win.c
++++ b/crypto/threads_win.c
+@@ -207,13 +207,16 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
+ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
+                      CRYPTO_RWLOCK *lock)
+ {
+-    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;
++/*    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;*/
++    *val |= op;
++    *ret = *val;
+     return 1;
+ }
+ 
+ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
+ {
+-    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
++/*    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);*/
++    *ret = *val;
+     return 1;
+ }
+ 
+diff --git a/e_os.h b/e_os.h
+index 9e2f140..5a7ed6a 100644
+--- a/e_os.h
++++ b/e_os.h
+@@ -113,9 +113,9 @@
+         * definitions at link-time.  This header defines WspiapiLoad() as an
+         * __inline function.  https://quality.embarcadero.com/browse/RSP-33806
+         */
+-#    if !defined(__BORLANDC__) || !defined(__clang__)
++/*#    if !defined(__BORLANDC__) || !defined(__clang__)
+ #     include <wspiapi.h>
+-#    endif
++#    endif*/
+        /* yes, they have to be #included prior to <windows.h> */
+ #   endif
+ #   include <windows.h>
+diff --git a/include/openssl/err.h.in b/include/openssl/err.h.in
+index 7ca0b97..ad23bb8 100644
+--- a/include/openssl/err.h.in
++++ b/include/openssl/err.h.in
+@@ -15,6 +15,7 @@ use OpenSSL::stackhash qw(generate_lhash_macros);
+ # define OPENSSL_ERR_H
+ # pragma once
+ 
++
+ # include <openssl/macros.h>
+ # ifndef OPENSSL_NO_DEPRECATED_3_0
+ #  define HEADER_ERR_H
+@@ -240,6 +241,8 @@ struct err_state_st {
+ 
+ # define ERR_SYSTEM_ERROR(errcode)      (((errcode) & ERR_SYSTEM_FLAG) != 0)
+ 
++static ossl_unused ossl_inline int ERR_GET_FUNC(unsigned long errcode ossl_unused) {return 0;}
++
+ static ossl_unused ossl_inline int ERR_GET_LIB(unsigned long errcode)
+ {
+     if (ERR_SYSTEM_ERROR(errcode))
+diff --git a/include/openssl/ssl3.h b/include/openssl/ssl3.h
+index 49bd51f..491b45e 100644
+--- a/include/openssl/ssl3.h
++++ b/include/openssl/ssl3.h
+@@ -76,6 +76,7 @@ extern "C" {
+ # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
+ 
+ /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
++# define SSL3_RFC_RSA_DES_64_CBC_SHA             "TLS_RSA_WITH_DES_CBC_SHA"
+ # define SSL3_RFC_RSA_NULL_MD5                   "TLS_RSA_WITH_NULL_MD5"
+ # define SSL3_RFC_RSA_NULL_SHA                   "TLS_RSA_WITH_NULL_SHA"
+ # define SSL3_RFC_RSA_DES_192_CBC3_SHA           "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+diff --git a/ssl/s3_lib.c b/ssl/s3_lib.c
+index f530c50..48996b1 100644
+--- a/ssl/s3_lib.c
++++ b/ssl/s3_lib.c
+@@ -128,6 +128,22 @@ static SSL_CIPHER tls13_ciphers[] = {
+ static SSL_CIPHER ssl3_ciphers[] = {
+     {
+      1,
++     SSL3_TXT_RSA_DES_64_CBC_SHA,
++     SSL3_RFC_RSA_DES_64_CBC_SHA,
++     SSL3_CK_RSA_DES_64_CBC_SHA,
++     SSL_kRSA,
++     SSL_aRSA,
++     SSL_DES,
++     SSL_SHA1,
++     SSL3_VERSION, TLS1_2_VERSION,
++     DTLS1_BAD_VER, DTLS1_2_VERSION,
++     SSL_LOW,
++     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
++     56,
++     56,
++     },
++    {
++     1,
+      SSL3_TXT_RSA_NULL_MD5,
+      SSL3_RFC_RSA_NULL_MD5,
+      SSL3_CK_RSA_NULL_MD5,

@@ -15,6 +15,15 @@
 #include "internal/cryptlib.h"
 #include "e_os.h"
 
+#ifndef _malloca
+#define _malloca(size) malloc(size)
+#endif
+
+#ifndef _freea
+#define _freea(target) free(target)
+#endif
+
+
 char *ossl_safe_getenv(const char *name)
 {
 #if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)

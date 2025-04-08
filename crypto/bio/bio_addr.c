@@ -35,6 +35,7 @@
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
+#undef AI_PASSIVE
 /*
  * Throughout this file and bio_local.h, the existence of the macro
  * AI_PASSIVE is used to detect the availability of struct addrinfo,

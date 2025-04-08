@@ -240,6 +240,8 @@ struct err_state_st {
 
 # define ERR_SYSTEM_ERROR(errcode)      (((errcode) & ERR_SYSTEM_FLAG) != 0)
 
+static ossl_unused ossl_inline int ERR_GET_FUNC(unsigned long errcode ossl_unused) {return 0;}
+
 static ossl_unused ossl_inline int ERR_GET_LIB(unsigned long errcode)
 {
     if (ERR_SYSTEM_ERROR(errcode))
